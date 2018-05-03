@@ -1,6 +1,6 @@
 # Unity manual to eBook
 
-Steps and a script to reformat the Unity3d user manual to an eBook-friendly html file.
+Steps and a script to reformat the Unity3d user manual to an eBook-friendly html files.
 
 ![UnityManualInKindle](doc/UnityManualInKindle.jpg)
 
@@ -68,17 +68,17 @@ The `ManualProcessor.groovy` script:
 - For each first level chapter creates a new `html` file.
 - Makes sure there are not too many pages in single chapters file.
 - Add number prefix for each file so the order is obvious.
-- Unsure the img links are correct after above image conversation.
+- Ensure the img links are correct after above image conversation.
 
 
 To get the script simply clone this repo or just:
 
 ```bash
-wget https://raw.githubusercontent.com/Premik/UnityManualEbook/master/ManualProcessor.groovy 
+wget https://raw.githubusercontent.com/Premik/UnityManualEbook/master/UnityManual.groovy
 ```
 
 - Get and install [Groovy](http://groovy-lang.org/)
-- Review the Groovy script. At the top there is `Param` class. If you are going to use a web-browser for reading set the `removeLocalUrlLinks = false` to keep the local links.
+- Review the Groovy script. At the top there is `Param` class. If you are going to use a web-browser for reading set the `removeLocalUrlLinks = false` to keep the local links. It is set to `false` by default to avoid Calibre from nesting all the referenced pages into eBook making hudge files.
 - Run the script inside the unziped folder `Documentation/en/`:
 
 ```bash
@@ -100,7 +100,7 @@ It will produce a new **Manual-flattened** folder with the linearized html files
  * `upload`
 
  ## Calibre
-- In the [Calibre](https://calibre-ebook.com/) import all the `html` files as individual books. Or just drag them to the library view.
+- In the [Calibre](https://calibre-ebook.com/) import all the `html` files from the `Manual-flattened` folder as individual books. Or just drag them to the library view.
 - Convert them to the desired format. I used `AZW3` aka `KF8` for my Kindle as the Mobi format had problems placing the images on proper location. 
 - The total size of the User Manul in the `AZW3` format in may case was slightly over `90MB`.
 ## Limitation
