@@ -11,13 +11,14 @@ import java.nio.file.Paths
 
 class Params {
 	/** Max number of original pages to fit into a single file. This affect number of file 'parts' generated  */
-	int maxSubChaptersInOneFile = 24
+	int maxSubChaptersInOneFile = 16
 
 	/**
 	 * Remove all <a href="url"> where the url is not a 'http://' link. 
 	 * This is needed for Calibre to not include all the linked objects (anohter html, pdfs) into the single book. 
 	 */
 	boolean removeLocalUrlLinks = true
+	boolean generateNextPrevLinks = false
 
 	/** Amount of console output. -1 .. 2 */
 	int verbose = 0
@@ -31,6 +32,8 @@ class Params {
 	 *  'ScriptReference' - the script reference (currently doesn't work well) 
 	 */
 	String subFolderName = "Manual"
+	
+	
 }
 
 class HtmlProcessor {
@@ -45,6 +48,7 @@ class HtmlProcessor {
 	private Map<String, Object> currentChapter
 	private Writer writter
 	private String rootChapterName
+	private String currentFileName
 	private Params p
 
 	private void trace(String msg) {
@@ -88,11 +92,13 @@ class HtmlProcessor {
 
 
 	private void openNewWritter() {
-		if (writter) closeWritter()
+		
 		String ch = rootChapterCounter.toString().padLeft(2, '0')
 		String part = ""
 		part = "part${('A'..'Z')[filePartCounter]}-"
-		File f = new File("$outputDir/$ch-$rootChapterName-$part${link}.html")
+		def nextLocalName = "$ch-$rootChapterName-$part${link}.html"
+		File f = new File("$outputDir/$nextLocalName")
+		if (writter) closeWritter(nextLocalName)
 		chaptersInFilePart = 0
 		writter = f.newWriter('UTF-8')
 
@@ -102,6 +108,8 @@ class HtmlProcessor {
 				<meta charset=utf-8><title>$rootChapterName</title>
 			</head><body>
 		/$)
+		if (currentFileName && p.generateNextPrevLinks) writter.write("\n <hr><a href='$currentFileName' >Previous file</a>")
+		currentFileName = nextLocalName
 
 		//writter.write('<?xml version="1.0"?>')
 		//writter.write('<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>')
@@ -111,8 +119,10 @@ class HtmlProcessor {
 
 	}
 
-	private void closeWritter() {
+	private void closeWritter(nextLocalFile) {		
 		assert writter
+		if (nextLocalFile && p.generateNextPrevLinks) writter.write("\n <hr><a href='$nextLocalFile' >Next file</a>")
+		
 		writter.write('''</body></html>''')
 		writter.close()
 		writter = null
@@ -268,7 +278,7 @@ class HtmlProcessor {
 
 def p = new Params()
 
-p.rootPath = "/tmp/work/Documentation/en"
+//p.rootPath = "/tmp/work/UnityManual"
 new HtmlProcessor(p).run()
 //new Navigator("/tmp/work/Documentation/en", "ScriptReference").run()
 
