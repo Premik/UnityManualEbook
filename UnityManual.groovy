@@ -18,7 +18,16 @@ class Params {
 	 * This is needed for Calibre to not include all the linked objects (anohter html, pdfs) into the single book. 
 	 */
 	boolean removeLocalUrlLinks = true
+	
+	/**
+	 * When true additional "next" "previous" links are added to each file 'part'.
+	 */
 	boolean generateNextPrevLinks = false
+	
+	/**
+	 * Should generate the index.html file.
+	 */
+	boolean generateIndex = true
 
 	/** Amount of console output. -1 .. 2 */
 	int verbose = 0
@@ -32,8 +41,46 @@ class Params {
 	 *  'ScriptReference' - the script reference (currently doesn't work well) 
 	 */
 	String subFolderName = "Manual"
+}
+
+class Index {
+	private Writer writter
 	
+	public Index(String indexFilePath) {
+		openWritter(indexFilePath)		
+	}
+
+
+	private void openWritter(String indexFilePath) {
+		
+		writter = new File(indexFilePath).newWriter('UTF-8')
+		writter.write(
+				$/<!DOCTYPE html><html lang="en">
+		<head>
+		<meta charset=utf-8><title>Unity Manual</title>
+		</head><body>
+		/$)
+	}
+
+	public void closeWritter() {
+		assert writter
+		writter.write('''</body></html>''')
+		writter.close()
+		writter = null
+	}
 	
+	public writeChapter(String chapter) {		
+		writter.write($/
+		 <h2>$chapter</h2>
+			/$)
+		writter.flush()
+	}
+
+	public writePart(String part, String link) {
+		writter.write($/
+		 		<a href="$link">$part</a><br>/$)
+		writter.flush()
+	}
 }
 
 class HtmlProcessor {
@@ -50,6 +97,7 @@ class HtmlProcessor {
 	private String rootChapterName
 	private String currentFileName
 	private Params p
+	private Index index
 
 	private void trace(String msg) {
 		if (p.verbose>=2) println(msg)
@@ -74,6 +122,10 @@ class HtmlProcessor {
 			error(m)
 			throw new IllegalArgumentException(m)
 		}
+		if (p.generateIndex) {
+			new File(outputDir).mkdirs()
+			index = new Index("$outputDir/index.html")
+		}
 	}
 
 	public String getTitle() {
@@ -89,23 +141,26 @@ class HtmlProcessor {
 		if (!ch || ch == 'null') return Collections.emptyList()
 		return ch
 	}
+	
+	public String getChapterNumber() {
+		return rootChapterCounter.toString().padLeft(2, '0')
+	}
 
 
 	private void openNewWritter() {
-		
-		String ch = rootChapterCounter.toString().padLeft(2, '0')
 		String part = ""
 		part = "part${('A'..'Z')[filePartCounter]}-"
-		def nextLocalName = "$ch-$rootChapterName-$part${link}.html"
+		def nextLocalName = "$chapterNumber-$rootChapterName-$part${link}.html"
 		File f = new File("$outputDir/$nextLocalName")
 		if (writter) closeWritter(nextLocalName)
 		chaptersInFilePart = 0
 		writter = f.newWriter('UTF-8')
+		def title = "$chapterNumber-$part${link}"
 
 		writter.write(
 				$/<!DOCTYPE html><html lang="en">
 				<head>
-				<meta charset=utf-8><title>$rootChapterName</title>
+				<meta charset=utf-8><title>$title</title>
 			</head><body>
 		/$)
 		if (currentFileName && p.generateNextPrevLinks) writter.write("\n <hr><a href='$currentFileName' >Previous file</a>")
@@ -115,14 +170,15 @@ class HtmlProcessor {
 		//writter.write('<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>')
 		//writter.write('<meta charset="UTF-8">')
 		//writter.write("<title>$rootChapterName</title></head><body>\n")
+		index?.writePart(title, currentFileName)
 
 
 	}
 
-	private void closeWritter(nextLocalFile) {		
+	private void closeWritter(nextLocalFile) {
 		assert writter
 		if (nextLocalFile && p.generateNextPrevLinks) writter.write("\n <hr><a href='$nextLocalFile' >Next file</a>")
-		
+
 		writter.write('''</body></html>''')
 		writter.close()
 		writter = null
@@ -221,7 +277,7 @@ class HtmlProcessor {
 			//Find all existing files which start with the original name in the link
 			def fk = null
 			try {
-			   fk = new FileNameFinder().getFileNames(imgFile.parent, "$imgBaseName*")
+				fk = new FileNameFinder().getFileNames(imgFile.parent, "$imgBaseName*")
 			} catch (Exception e) {}
 			if (!fk) {
 				error("${img.@src} doesn't exist")
@@ -240,19 +296,20 @@ class HtmlProcessor {
 	}
 
 
-	private void processChapter(int deep) {
+	private void processChapter(int deep) {		
 		if (deep == 0) {//Root chapter
 			rootChapterName = link
 			info("${'-'*10} $title ${'-'*10}")
 			filePartCounter =0
 			rootChapterCounter++
+			index?.writeChapter("$chapterNumber. $title")
 			openNewWritter()
 		}
 		debug("${' '*deep}$title")
 
 		if (chaptersInFilePart > p.maxSubChaptersInOneFile) {
 			chaptersInFilePart = 0
-			filePartCounter++
+			filePartCounter++			
 			openNewWritter()
 		}
 		appendArticleContent()
@@ -272,6 +329,7 @@ class HtmlProcessor {
 		currentChapter = toc
 		processChildChapters()
 		closeWritter()
+		index?.closeWritter()
 	}
 
 
@@ -282,6 +340,8 @@ class HtmlProcessor {
 def p = new Params()
 
 //p.rootPath = "/tmp/work/UnityManual"
+p.rootPath = "/tmp/unity/Documentation/en"
+
 new HtmlProcessor(p).run()
 //new Navigator("/tmp/work/Documentation/en", "ScriptReference").run()
 
