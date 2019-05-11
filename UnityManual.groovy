@@ -219,7 +219,10 @@ class HtmlProcessor {
 
 
 			//Find all existing files which start with the original name in the link
-			def fk = new FileNameFinder().getFileNames(imgFile.parent, "$imgBaseName*")
+			def fk = null
+			try {
+			   fk = new FileNameFinder().getFileNames(imgFile.parent, "$imgBaseName*")
+			} catch (Exception e) {}
 			if (!fk) {
 				error("${img.@src} doesn't exist")
 				return //Continue

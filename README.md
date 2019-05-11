@@ -9,7 +9,7 @@ Steps and a script to reformat the Unity3d user manual to an eBook-friendly html
 Download the offline documentation from the unity3d page. For example: [2018.2](https://docs.unity3d.com/2018.2/Documentation/Manual/OfflineDocumentation.html)
 
 ```bash
- wget https://docs.unity3d.com/2018.1/Documentation/uploads/UnityDocumentation.zip
+ wget https://storage.googleapis.com/docscloudstorage/2019.2/UnityDocumentation.zip
  unzip UnityDocumentation.zip -d /tmp/unity/
  cd /tmp/unity/Documentation/en
 ```
@@ -46,7 +46,7 @@ find . -name "*.png" -exec pngcrush -brute -l 9 -rem gAMA -rem cHRM -rem iCCP -r
 ```
 
 As an alternative the `mogrify` from the ImageMagic can be used too. But it would produce bigger images.
-The the `pngcrush` is slow. It takes more than 30 minutes to convert all the `pngs` on an average pc. But the resulted images (after bit-depth reduction and grayscale) are `3x-5x` times smaller.
+The  `pngcrush` is slow. It takes more than 30 minutes to convert all the `pngs` on an average pc. But the resulted images (after bit-depth reduction and grayscale) are `3x-5x` times smaller.
 
 ```bash
 #find . -name "*.png" -exec mogrify -verbose -type Grayscale -depth 8 -quality 9 -format png {}  \;
@@ -84,7 +84,7 @@ wget https://raw.githubusercontent.com/Premik/UnityManualEbook/master/UnityManua
 ```bash
 groovy UnityManual.groovy
 ```
-It will produce a new **Manual-flattened** folder with the linearized html files beside the original 'Manul' folder:
+It will produce a new **Manual-flattened** folder with the linearized html files beside the original 'Manual' folder:
 
  * `Manual`
  * **Manual-flattened**
